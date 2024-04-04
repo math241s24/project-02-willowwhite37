@@ -28,7 +28,7 @@ vb_stats <- readr::read_csv('ncaa_w_boxscores_2012-2019.csv')
 
 (This dataset was too large to load on to github)
 
-The dataset I am using is from kaggle.com (with data from the NCAA website) and it consists of all of the womens NCAA (National Collegiate Athletic Association) volleyball box scores from 2012-2019. Besides box scores, this dataset also includes the first and last names of players, what team they play on, what the opposing team was, as well as other less critical information such as their jersey numbers. The dimensions of this dataset are 781,962 observations (each observation being a player's stats in a particular game) by 26 variables.
+The dataset I am using is from kaggle.com (with data from the NCAA website) and it consists of all of the women's NCAA (National Collegiate Athletic Association) volleyball box scores from 2012-2019. Besides box scores, this dataset also includes the first and last names of players, what team they play on, what the opposing team was, as well as other less critical information such as their jersey numbers. The dimensions of this dataset are 781,962 observations (each observation being a player's stats in a particular game) by 26 variables.
 
 ## Reason for Choosing this Dataset
 
@@ -44,4 +44,4 @@ For another one of my visualizations I am interested in looking at how the distr
 
 For a third visualization I want to make a bar graph showing some stats such as average hitting percentage by players on teams where you can change the year (because the players on the team would vary by year).
 
-Plan: For my next steps I'm planning on first tidying my data and re-naming some of my columns, creating a year column, as well as adding a location column and working through the legistics of how to get the data to work with leaflet. I am then planning on working on my three visualizations and having them done for the peer review of code on 4/15. To get this done in time I am planning on working on a little bit of it each day until then so that I don't run into big road blocks at the last minute. After 4/15 I will continue refining my code as well as working on the write-up and presentation for this project.
+Plan: For my next steps I'm planning on first tidying my data and re-naming some of my columns, creating a year column, as well as adding a location column and working through the logistics of how to get the data to work with leaflet. I am then planning on working on my three visualizations and having them done for the peer review of code on 4/15. To get this done in time I am planning on working on a little bit of it each day until then so that I don't run into big roadblocks at the last minute. After 4/15 I will continue refining my code as well as working on the write-up and presentation for this project.
