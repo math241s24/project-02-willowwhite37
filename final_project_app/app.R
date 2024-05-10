@@ -8,7 +8,7 @@ library(gt)
 library(glue)
 library(usmap)
 
-small_vb_stats <- readRDS("../small_vb_stats.rds")
+small_vb_stats <- readRDS("small_vb_stats.rds")
 
 
 
