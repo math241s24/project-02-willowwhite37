@@ -69,7 +69,9 @@ blockingErrors: A blocking error occurs when the blocker commits an error that c
 
 ballHandlingErrors: Ball handling errors include double hits, lifted balls, and thrown balls unless they fall under the reception errors, attack errors, or blocking errors listed above.
 
-\
+## **A Guide to what the Box Scores Mean**
+
+This a dashboard can be found on shiny.io at this link: <https://willowwhite37.shinyapps.io/final_project_app/>
 
 ```{r}
 library(shiny)
@@ -415,4 +417,3 @@ output$barplotteam <- renderPlot({
 shinyApp(ui = ui, server = server)
 
 ```
-
