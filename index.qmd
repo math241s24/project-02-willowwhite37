@@ -10,6 +10,409 @@ execute:
   message: false
 ---
 
-## Abstract
-
 ## Introduction
+
+For my project I was interested in finding a way to better visualize the data that the NCCA (National Collegiate Athletic Association) keeps track of, specifically for the women’s volleyball box scores. Box scores in volleyball are the specific statistics that are kept track of for each player throughout games (Kills (K), Errors (E), Total attempts (TA), Hitting percentage (PCT), Assists (A), Service ace (SA), Service error (SE), Reception error (RE), Dig (DIG), Block solo (BS), Block assist (BA), Blocking error (BE), Ball handling errors (BHE)). In order to do this I decided to make a shiny dashboard that makes it easier for players and/or coaches to visualize their statistics so that they could then apply this to what they needed to coach more, or decide which players to use for certain things such as serving. 
+
+The dataset I used is from kaggle.com (with data from the NCAA website) and it consists of all of the women's NCAA (National Collegiate Athletic Association) volleyball box scores from 2012-2019. Besides box scores, this dataset also includes the first and last names of players, what team they play on, what the opposing team was, as well as other less critical information such as their jersey numbers. The dimensions of this dataset are 781,962 observations (each observation being a player's stats in a particular game) by 26 variables.
+
+## **Data Wrangling Process**
+
+My dataset started off being extremely large, and was also missing some of the variables that were necessary for building my app. Because of this, I both cut down on some things and added other variables. I first filtered out unnecessary variables such as jersey number. I then created a column that combined the first and last name column, and turned the date column into a year column. I also manually added a state column based on the team and where it was from. Finally, I saved it as an RDS file so that it would be smaller and more manageable to run. My new dataset (small_vb_stats) had 781,962 observations and 17 variables (player, year, team, attackAttempts, attackErrors, ballHandlingErrors, blockAssists, blockSolos, blockingErrors, digs, hittingPercentage, kills, points, receptionErrors, serviceAces, serviceErrors, and state). 
+
+## **My Shiny Dashboard**
+
+My dashboard has five main tabs: “Stats Table,” “Stats Bar Chart Player,” “Stats Bar Chart Team,” “Stats Map,” and “Popularity Map.” Each of these tabs allows the user to look at these statistics in different ways. 
+
+For my “Stats Table” tab, the dashboard creates a table output after the user selects certain inputs. The user selects a team, the player(s) of interest for that team, and the year(s) of interest for that team. Then the user is also able to select if they would like to look at all the rows for that player(s) (each row being the stats for a certain game), or if they want to look at that player(s) mean stats for the selected year(s). The stats that appear in the table are attackAttempts, attackErrors, ballHandlingErrors, blockAssists, blockSolos, blockingErrors, digs, hittingPercentage, kills, points, receptionErrors, serviceAces, and serviceErrors.
+
+\
+
+My “Stats Bar Chart Player” tab allows for the player to select a player and year, and then visualize the average of those same stats on a bar chart (with the y-axis being the average value). 
+
+\
+
+The “Stats Bar Chart Teamr” tab is very similar to the “Stats Bar Chart Player” tab, but rather than selecting a player, the user selects a team and the bar chart displays the averages across the entire team for that year. 
+
+\
+
+The “Stats Map” tab shows a map of the United States. The user is then able to select the box score that they are interested in comparing across states. Once they have selected their variable of interest, the map becomes shaded based on the average value of that statistic for that state. 
+
+\
+
+Finally, the “Popularity Map” tab shows a static map of the United States that is shaded based on the number of teams in that state. 
+
+## **A Guide to what the Box Scores Mean**
+
+ kills: An attack is a player sending the ball over the net in an attempt to score. A kill is recorded whenever an attack is unreturnable. A kill always results in a point. 
+
+attackAttempts: An attack attempt is recorded any time a player attempts to attack (hit strategically) the ball into the op- ponent's court. The ball may be spiked, set, tipped or hit as an overhead contact. There are three possible outcomes of an at- tack attempt. (1) There can be a kill. (2) There can be an attack error.
+
+attackErrors: An error is recorded when an attack attempt gives the opposition a point. Examples of an attack error include an opponent blocking the attack for a point or a player hitting the ball out of bounds. An attack error always results in a point for the other team.
+
+hittingPercentage: Hitting percentage is derived from this formula:\
+(KILLS – ERRORS) / TOTAL ATTEMPTS = HITTING PERCENTAGE.
+
+serviceAces: A service ace is awarded when a serve can not be returned and results in a point, or when a serve leads to a violation by the opponent that results in a point.
+
+serviceErrors: A service error is charged when the serve is unsuccessful. Examples include: when the serve does not clear the net or lands out of bounds, or when the server commits an error, such as foot faulting.
+
+receptionErrors: A reception error is when a player receiving the serve messes up. This could be by making an unplayable pass after receiving the serve, letting the serve hit the floor nearby or committing an infraction while taking the serve. The reception error is charged to the team if the serve lands between two players who could have taken it or if the receiving team is out of rotation. It is important to note that any time an ace is recorded by the serving team, a reception error must be charged to the receiving team.
+
+digs: A statistical dig is given anytime an attack is successfully defended. The dig can be passed to another player or sent back over the net. A dig that is not kept in play is not awarded in the stats.
+
+blockSolos: A block solo is given when a player successfully blocks an attack attempt for a score by themselves. 
+
+blockAssists: If more than one player goes up to block, even if only one of the players touches the ball, and the block results in a point then each player receives a block assist.
+
+blockingErrors: A blocking error occurs when the blocker commits an error that causes the referee to whistle the play dead. Note that a blocked ball going out of bounds or into the net is not a blocking error. Blocking errors include a blocker: reaching over the net, going into the net, throwing the ball, etc. A blocking error results in a kill for the attacker.
+
+ballHandlingErrors: Ball handling errors include double hits, lifted balls, and thrown balls unless they fall under the reception errors, attack errors, or blocking errors listed above.
+
+\
+
+```{r}
+library(shiny)
+library(shinythemes)
+library(dplyr)
+library(tidyverse)
+library(sf)
+library(scico)
+library(gt)
+library(glue)
+library(usmap)
+
+small_vb_stats <- readRDS("small_vb_stats.rds")
+
+
+
+map <- us_map()
+
+map2_data <- small_vb_stats %>% 
+  group_by(state) %>%
+  summarize(avg_attackAttempts = mean(attackAttempts),
+            avg_attackErrors = mean(attackErrors), 
+            avg_digs = mean(digs), 
+            avg_ballHandlingErrors = mean(ballHandlingErrors), 
+            avg_blockAssists = mean(blockAssists), 
+            avg_blockSolos = mean(blockSolos),
+            avg_blockingErrors = mean(blockingErrors),
+            avg_hittingPercentage = mean(hittingPercentage),
+            avg_kills = mean(kills), 
+            avg_points = mean(points), 
+            avg_receptionErrors = mean(receptionErrors), 
+            avg_serviceAces = mean(serviceAces), 
+            avg_serviceErrors = mean(serviceErrors))
+
+map2_data <- map2_data %>% 
+  left_join(map, by = c("state" = "full")) %>% 
+  st_as_sf()
+
+map2_data <- st_cast(map2_data, "MULTIPOLYGON")
+
+team_counts <- small_vb_stats %>% 
+  group_by(state) %>% 
+  summarize(n_teams = length(unique(team)))
+
+ui <- navbarPage(
+  theme = shinytheme("flatly"),
+  title = "Volleyball Stats",
+  tabPanel(
+    "Stats Table",
+    sidebarPanel(
+      selectizeInput(inputId = "team",
+                     label = "Select team",
+                     choices = NULL,
+                     multiple = FALSE),
+      selectizeInput(inputId = "player",
+                     label = "Select player",
+                     choices = "",
+                     multiple = TRUE),
+      selectizeInput(inputId = "year",
+                     label = "Select year",
+                     choices = "",
+                     multiple = TRUE),
+      radioButtons(inputId = "mean_or_all",
+                   label = "Mean or All Stats",
+                   choices = c("mean_stats", "all_stats"),
+                   selected = "all_stats")
+    ),
+    mainPanel(
+      gt_output("table")
+    )),
+  tabPanel(
+    "Stats Bar Chart Player",
+    sidebarPanel(
+      selectizeInput(inputId = "playergraph",
+                     label = "Select player",
+                     choices = NULL,
+                     multiple = FALSE),
+      selectizeInput(inputId = "yeargraph",
+                     label = "Select year",
+                     choices = NULL,
+                     multiple = FALSE)
+    ),
+    mainPanel(
+      plotOutput(outputId = "barplotplayer")
+    )
+  ),
+  tabPanel(
+    "Stats Bar Chart Team",
+    sidebarPanel(
+      selectizeInput(inputId = "teamgraph",
+                     label = "Select team",
+                     choices = NULL,
+                     multiple = FALSE),
+      selectizeInput(inputId = "yeargraph2",
+                     label = "Select year",
+                     choices = NULL,
+                     multiple = FALSE)
+    ),
+    mainPanel(
+      plotOutput(outputId = "barplotteam")
+    )
+  ),
+  tabPanel(
+    "Stats Map",
+    sidebarPanel(
+      selectizeInput(inputId = "boxscore",
+                     label = "Select Average Box Score of Interest",
+                     choices = NULL,
+                     multiple = FALSE)
+    ),
+    mainPanel(
+      plotOutput(outputId = "map2")
+    )
+  ),
+  tabPanel(
+    "Popularity Map",
+    mainPanel(
+      plotOutput(outputId = "graph1")
+    )
+  ))
+
+# Server ---------------------------------------------------------------------------
+server <- function(input, output, session) {
+
+  dat_filter <- reactive({ 
+    small_vb_stats %>%
+      filter(team %in% input$team) %>% 
+      filter(player %in% input$player) %>%
+      filter(year %in% input$year)
+    
+  }) 
+  
+  
+  dat_filter_player <- reactive({ 
+   player_df <- small_vb_stats %>%
+      filter(team %in% input$team) 
+   unique(player_df$player) 
+  }) 
+  
+  dat_filter_year <- reactive({ 
+   year_df <- small_vb_stats %>%
+      filter(team %in% input$team) %>% 
+      filter(player %in% input$player)
+   unique(year_df$year)
+  }) 
+  
+    updateSelectizeInput(session, 'team',
+                         choices = unique(small_vb_stats$team),
+                         selected = "washington-st",
+                         server = TRUE)  
+   
+    observe({ 
+      updateSelectizeInput(session, 'player',
+                         choices = dat_filter_player(),
+                         selected = dat_filter_player()[1], 
+                         server = TRUE)
+    })
+    
+    observe({
+      updateSelectizeInput(session, 'year',
+                         choices = dat_filter_year(),
+                         selected = dat_filter_year()[1],
+                         server = TRUE)
+    })
+
+       
+    updateSelectizeInput(session, 'boxscore',
+                         choices = colnames(map2_data)[-c(1, 15, 16, 17)],
+                         selected = "avg_attackAttempts",
+                         server = TRUE)
+    
+    updateSelectizeInput(session, 'teamgraph',
+                         choices = unique(small_vb_stats$team),
+                         selected = "washington-st",
+                         server = TRUE)  
+    
+    updateSelectizeInput(session, 'playergraph',
+                         choices = unique(small_vb_stats$player),
+                         selected = "Rachel Todorovich", 
+                         server = TRUE)
+    
+    updateSelectizeInput(session, 'yeargraph',
+                         choices = unique(small_vb_stats$year),
+                         selected = "2012",
+                         server = TRUE)
+    
+    updateSelectizeInput(session, 'yeargraph2',
+                         choices = unique(small_vb_stats$year),
+                         selected = "2012",
+                         server = TRUE)
+  
+  output$table <- render_gt({
+ if (input$mean_or_all == "all_stats") {
+   player_example <- dat_filter() 
+   
+   player_example_tbl <- gt(player_example)
+   
+   allstats_example_tbl <- player_example_tbl %>%
+     tab_header(title = glue("All Stats {input$player} {input$year}")) %>%
+     fmt_number(
+       columns = c(attackAttempts, attackErrors, ballHandlingErrors, blockAssists, blockSolos, blockingErrors, digs, hittingPercentage, kills, points, receptionErrors, serviceAces, serviceErrors),
+       decimals = 1
+     )
+   
+   allstats_example_tbl  
+ } else {
+   player_example2 <- dat_filter() %>% 
+     group_by(player) %>% 
+     summarize(avg_attackAttempts = mean(attackAttempts),
+               avg_attackErrors = mean(attackErrors), 
+               avg_digs = mean(digs), 
+               avg_ballHandlingErrors = mean(ballHandlingErrors), 
+               avg_blockAssists = mean(blockAssists), 
+               avg_blockSolos = mean(blockSolos),
+               avg_blockingErrors = mean(blockingErrors),
+               avg_hittingPercentage = mean(hittingPercentage),
+               avg_kills = mean(kills), 
+               avg_points = mean(points), 
+               avg_receptionErrors = mean(receptionErrors), 
+               avg_serviceAces = mean(serviceAces), 
+               avg_serviceErrors = mean(serviceErrors))
+   
+   player_example_tbl2 <- gt(player_example2)
+   
+   avgstats_example_tbl <- player_example_tbl2 %>%
+     tab_header(title = glue("Average Stats {input$player} {input$year}")) %>%
+     fmt_number(
+       columns = c(avg_attackAttempts, avg_attackErrors, avg_ballHandlingErrors, avg_blockAssists, avg_blockSolos, avg_blockingErrors, avg_digs, avg_hittingPercentage, avg_kills, avg_points, avg_receptionErrors, avg_serviceAces, avg_serviceErrors),
+       decimals = 1
+     )
+   
+   avgstats_example_tbl
+ }
+     
+    
+  }) 
+  
+  
+ output$graph1 <- renderPlot({
+ 
+   map_data <- team_counts %>% 
+     left_join(map, by = c("state" = "full")) 
+   
+   ggplot() +
+     geom_sf(data = map_data, mapping = aes(fill = n_teams, geometry = geom)) +
+     scale_fill_scico(palette = "acton")
+ })
+    
+ 
+output$map2 <- renderPlot({
+
+  
+ggplot() +
+    geom_sf(data = map2_data, mapping = aes_string(fill = input$boxscore, geometry = "geom")) +
+    scale_fill_scico(palette = "acton")
+  
+
+  
+})
+
+dat_filter2 <- reactive({ 
+  small_vb_stats %>% 
+    filter(player %in% input$playergraph) %>%
+    filter(year %in% input$yeargraph) %>% 
+    group_by(player) %>% 
+    summarize(avg_attackAttempts = mean(attackAttempts),
+              avg_attackErrors = mean(attackErrors), 
+              avg_digs = mean(digs), 
+              avg_ballHandlingErrors = mean(ballHandlingErrors), 
+              avg_blockAssists = mean(blockAssists), 
+              avg_blockSolos = mean(blockSolos),
+              avg_blockingErrors = mean(blockingErrors),
+              avg_hittingPercentage = mean(hittingPercentage),
+              avg_kills = mean(kills), 
+              avg_points = mean(points), 
+              avg_receptionErrors = mean(receptionErrors), 
+              avg_serviceAces = mean(serviceAces), 
+              avg_serviceErrors = mean(serviceErrors)) %>% 
+    pivot_longer(cols = tidyselect::starts_with("avg_"), 
+                 names_to = "variable", values_to = "stat")
+  
+})
+
+output$barplotplayer <- renderPlot({
+  my_colors <- c("lightyellow", "yellow", "goldenrod", "orange", 
+                 "darkorange", "red", "firebrick", "darkred", 
+                 "maroon", "purple","blue", "darkblue", "midnightblue")
+  
+  ggplot(dat_filter2(), aes(x = variable, y = stat, fill = variable)) +
+    geom_bar(stat = "identity", color = "black") +
+    labs(title = glue("Average Stats {input$playergraph} {input$yeargraph}"),
+         x = "Box scores",
+         y = "Average Value") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    guides(fill = FALSE) +
+    scale_fill_manual(values = my_colors)  
+  
+})
+
+dat_filter3 <- reactive({ 
+  small_vb_stats %>% 
+    filter(team %in% input$teamgraph) %>%
+    filter(year %in% input$yeargraph2) %>% 
+    group_by(team) %>% 
+    summarize(avg_attackAttempts = mean(attackAttempts),
+              avg_attackErrors = mean(attackErrors), 
+              avg_digs = mean(digs), 
+              avg_ballHandlingErrors = mean(ballHandlingErrors), 
+              avg_blockAssists = mean(blockAssists), 
+              avg_blockSolos = mean(blockSolos),
+              avg_blockingErrors = mean(blockingErrors),
+              avg_hittingPercentage = mean(hittingPercentage),
+              avg_kills = mean(kills), 
+              avg_points = mean(points), 
+              avg_receptionErrors = mean(receptionErrors), 
+              avg_serviceAces = mean(serviceAces), 
+              avg_serviceErrors = mean(serviceErrors)) %>% 
+    pivot_longer(cols = tidyselect::starts_with("avg_"), 
+                 names_to = "variable", values_to = "stat")
+  
+})
+
+output$barplotteam <- renderPlot({
+  my_colors <- c("lightyellow", "yellow", "goldenrod", "orange", 
+                 "darkorange", "red", "firebrick", "darkred", 
+                 "maroon", "purple","blue", "darkblue", "midnightblue")
+  
+  ggplot(dat_filter3(), aes(x = variable, y = stat, fill = variable)) +
+    geom_bar(stat = "identity", color = "black") +
+    labs(title = glue("Average Stats {input$teamgraph} {input$yeargraph2}"),
+         x = "Box scores",
+         y = "Average Value") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    guides(fill = FALSE) +
+    scale_fill_manual(values = my_colors) 
+})
+   
+}
+
+# Creates app ----------------------------------------------------------------------
+shinyApp(ui = ui, server = server)
+
+```
+

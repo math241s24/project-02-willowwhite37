@@ -1,7 +1,7 @@
 ---
-title: "Project title"
+title: "Volleyball Stats Shiny Dashboard"
 subtitle: "Project 2"
-author: "Team"
+author: "Willow White"
 title-slide-attributes:
   data-slide-number: none
 format: revealjs
@@ -15,6 +15,13 @@ execute:
 #| include: false
 
 library(tidyverse)
+library(dplyr)
+library(leaflet)
+library(sf)
+library(usmap)
+library(FIESTA)
+library(scico)
+library(gt)
 ```
 
 ```{r}
@@ -34,4 +41,289 @@ knitr::opts_chunk$set(
 ```{r}
 #| label: load-data
 #| include: false
+
+vb_stats <- readr::read_csv('ncaa_w_boxscores_2012-2019.csv')
+
+vb_stats <- vb_stats %>% 
+  mutate(player = paste(firstName, lastName, sep = " ")) %>% 
+  mutate(year = year(dates))
+
+vb_stats <- vb_stats %>%
+  mutate(state = case_when(
+    team %in% c("alabama", "alabama-am", "alabama-st", "auburn", "mobile", "north-ala", "samford", "south-ala", "stillman", "talladega", "troy", "tuskegee", "uab", "west-ala") ~ "Alabama",
+    team %in% c() ~ "Alaska", 
+    team %in% c("arizona", "arizona-st", "grand-canyon", "northern-ariz") ~ "Arizona", 
+    team %in% c("ark-monticello", "ark-pine-bluff", "arkansas", "arkansas-st", "central-ark", "central-baptist", "crowleys-ridge", "harding", "henderson-st", "lyon", "southern-ark", "ualr") ~ "Arkansas", 
+    team %in% c("bakersfield", "cal-poly", "cal-st-fullerton", "cal-st-northridge", "california", "california-baptist", "fresno-st", "la-sierra", "long-beach-st", "loyola-marymount", "pepperdine", "sacramento-st", "saint-katherine-college", "san-diego", "san-diego-st", "san-francisco", "san-jose-st", "santa-clara", "southern-california", "st-marys-ca", "stanford", "uc-davis", "uc-irvine", "uc-riverside", "uc-santa-barbara", "ucla") ~ "California",
+    team %in% c("air-force", "colorado", "colorado-st", "colorado-st-pueblo", "denver", "northern-colo") ~ "Colorado", 
+    team %in% c("central-conn-st", "fairfield", "hartford", "quinnipiac", "sacred-heart", "uconn", "yale") ~ "Connecticut", 
+    team %in% c("delaware", "delaware-st") ~ "Delaware", 
+    team %in% c("bethune-cookman", "fgcu", "fiu","fla-atlantic", "florida", "florida-am", "florida-st", "jacksonville", "jacksonville-st", "miami-fl", "north-florida", "south-fla", "stetson", "tba", "ucf") ~ "Florida",
+    team %in% c("albany-st-ga", "ga-southern", "georgia", "georgia-st", "georgia-tech", "kennesaw-st", "mercer", "savannah-st") ~ "Georgia",
+    team %in% c("hawaii") ~ "Hawaii", 
+    team %in% c("boise-st", "idaho", "idaho-st") ~ "Idaho", 
+    team %in% c("bradley", "chicago-st", "depaul", "eastern-ill", "ill-chicago", "illinois", "illinois-st", "loyola-chicago", "loyola-il", "northern-ill", "northwestern", "siu-edwardsville", "southern-ill", "western-ill") ~ "Illinois", 
+    team %in% c("ball-st", "butler", "evansville", "indiana", "indiana-st", "ipfw", "iupui", "marian-ind", "notre-dame", "purdue", "valparaiso") ~ "Indiana", 
+    team %in% c("drake", "iowa", "iowa-st", "uni") ~ "Iowa", 
+    team %in% c("kansas", "kansas-st", "wichita-st") ~ "Kansas", 
+    team %in% c("eastern-ky", "kentucky", "louisville", "morehead-st", "murray-st", "northern-ky", "western-ky") ~ "Kentucky", 
+    team %in% c("centenary-la", "dillard", "grambling", "la-lafayette", "la-monroe", "louisiana-tech", "lsu", "mcneese-st", "new-orleans", "nicholls-st", "northwestern-st", "southeastern-la", "southern-u", "tulane") ~ "Lousiana", 
+    team %in% c() ~ "Maine", 
+    team %in% c("american", "coppin-st", "george-washington", "georgetown", "howard", "loyola-maryland", "maryland", "md-east-shore", "morgan-st", "navy", "towson", "umbc") ~ "Maryland", 
+    team %in% c("boston-college", "harvard", "holy-cross", "mass-lowell", "merrimack", "northeastern", "umass-lowell") ~ "Massachusetts", 
+    team %in% c("central-mich", "eastern-mich", "michigan", "michigan-st", "oakland", "western-mich") ~ "Michigan", 
+    team %in% c("minnesota") ~ "Minnesota", 
+    team %in% c("alcorn", "jackson-st", "mississippi-st", "mississippi-val", "muw", "ole-miss", "rust", "southern-miss", "tougaloo", "william-carey") ~ "Mississippi",
+    team %in% c("missouri", "missouri-st", "saint-louis", "southeast-mo-st", "umkc") ~ "Missouri", 
+    team %in% c("carroll-mt", "montana", "montana-st", "providence") ~ "Montana", 
+    team %in% c("creighton", "neb-omaha", "nebraska") ~ "Nebraska",
+    team %in% c("nevada", "unlv") ~ "Nevada", 
+    team %in% c("dartmouth", "new-hampshire", "southern-nh") ~ "New Hampshire", 
+    team %in% c("fairleigh-dickinson", "njit", "princeton", "rider", "rutgers", "seton-hall", "st-peters") ~ "New Jersey", 
+    team %in% c("new-mexico", "new-mexico-st") ~ "New Mexico", 
+    team %in% c("albany-ny", "army", "binghamton", "buffalo", "canisius", "colgate", "columbia", "cornell", "fordham", "hofstra", "iona", "long-island", "manhattan", "marist", "niagara", "siena", "st-francis-ny", "st-johns-ny", "stony-brook", "syracuse") ~ "New York", 
+    team %in% c("appalachian-st", "campbell", "charlotte", "davidson", "duke", "east-carolina", "elon", "gardner-webb", "high-point", "montreat", "nc-at", "nc-central", "north-carolina", "north-carolina-st", "unc-asheville", "unc-greensboro", "unc-wilmington", "wake-forest", "western-caro") ~ "North Carolina", 
+    team %in% c("north-dakota", "north-dakota-st") ~ "North Dakota", 
+    team %in% c("akron", "bowling-green", "cincinnati", "cleveland-st", "dayton", "kent-st", "miami-oh", "ohio", "ohio-st", "toledo", "wright-st", "xavier", "youngstown-st") ~ "Ohio", 
+    team %in% c("oklahoma", "oral-roberts", "tulsa") ~ "Oklahoma", 
+    team %in% c("corban", "oregon", "oregon-st", "pacific", "portland", "portland-st") ~ "Oregon", 
+    team %in% c("bucknell", "duquesne", "la-salle", "lafayette", "lehigh", "penn", "penn-st", "pittsburgh", "robert-morris", "st-francis-pa", "temple", "villanova") ~ "Pennsylvania", 
+    team %in% c("brown", "bryant", "rhode-island") ~ "Rhode Island", 
+    team %in% c("charleston-so", "citadel", "clemson", "coastal-caro", "col-of-charleston", "furman", "limestone", "presbyterian", "south-carolina", "south-carolina-st", "usc-upstate", "winthrop", "wofford") ~ "South Carolina", 
+    team %in% c("south-dakota", "south-dakota-st") ~ "South Dakota", 
+    team %in% c("austin-peay", "belmont", "chattanooga", "east-tenn-st", "fisk", "lipscomb", "memphis", "middle-tenn", "tennessee", "tennessee-st", "tennessee-tech", "tusculum", "ut-martin") ~ "Tennessee", 
+    team %in% c("abilene-christian", "am-corpus-chris", "baylor", "houston", "houston-baptist", "huston-tillotson", "incarnate-word", "jarvis-christian", "lamar", "north-texas", "prairie-view", "rice", "sam-houston-st", "smu", "st-thomas-texas", "stephen-f-austin", "tcu", "tex-am-kingsville", "texas", "texas-am", "texas-arlington", "texas-college", "texas-southern", "texas-st","texas-tech", "uiw", "utep", "utrgv", "utsa", "wiley", "st-thomas-tx") ~ "Texas", 
+    team %in% c("byu", "southern-utah", "utah", "utah-st", "utah-valley", "weber-st") ~ "Utah", 
+    team %in% c("saint-michaels") ~ "Vermont", 
+    team %in% c("brevard", "george-mason", "hampton", "james-madison", "liberty", "norfolk-st", "radford", "vcu", "virginia", "virginia-tech", "william-mary") ~ "Virginia", 
+    team %in% c("eastern-wash", "gonzaga", "seattle", "washington", "washington-st") ~ "Washington",
+    team %in% c("marshall", "west-virginia") ~ "West Virginia", 
+    team %in% c("green-bay", "marquette", "milwaukee", "wisconsin") ~ "Wisconsin", 
+    team %in% c("wyoming") ~ "Wyoming"
+  ))
+
+
+small_vb_stats <- vb_stats %>% 
+  select(player, year, team, attackAttempts, attackErrors, ballHandlingErrors, blockAssists, blockSolos, blockingErrors, digs, hittingPercentage, kills, points, receptionErrors, serviceAces, serviceErrors, state)
+
+team_counts <- small_vb_stats %>% 
+  group_by(state) %>% 
+  summarize(n_teams = length(unique(team)))
+
 ```
+
+## Introduction 
+
+* Goal: 
+  * Create a shiny dashboard for visualizing volleyball
+  statistics
+  * Tool for coaches and players
+* My dataset: 
+  * NCAA (National Collegiate Athletic Association) Women's
+  Volleyball Stats 2012 - 2019
+  * 781,962 observations, 26 variables --> 781,962 observations,
+  17 variables
+  * Each row player + game
+  * All players participated 
+
+
+
+
+
+## App 1
+
+* Table displaying different stats
+  * Change player or team
+  * Slider to filter for year
+  * Average or all stats
+  
+* Rachel Todorovich, all stats, 2012
+  * Helpful for looking at particular games
+```{r, echo = F}
+player_example <- small_vb_stats %>% 
+  group_by(player) %>% 
+  filter(player == "Rachel Todorovich") %>% 
+  filter(year == "2012")
+
+player_example_tbl <- gt(player_example)
+
+allstats_example_tbl <- player_example_tbl %>%
+  tab_header(title = "All Stats Rachel Todorovich 2012") %>%
+  fmt_number(
+    columns = c(attackAttempts, attackErrors, ballHandlingErrors, blockAssists, blockSolos, blockingErrors, digs, hittingPercentage, kills, points, receptionErrors, serviceAces, serviceErrors),
+    decimals = 1
+  )
+
+allstats_example_tbl
+```
+
+
+* Rachel Todorovich, average stats, 2012
+  * Helpful for looking at overall trends
+```{r, echo = F}
+player_example2 <- small_vb_stats %>% 
+  group_by(player) %>% 
+  filter(player == "Rachel Todorovich") %>% 
+  filter(year == "2012") %>% 
+  summarize(avg_attackAttempts = mean(attackAttempts),
+            avg_attackErrors = mean(attackErrors), 
+            avg_digs = mean(digs), 
+            avg_ballHandlingErrors = mean(ballHandlingErrors), 
+            avg_blockAssists = mean(blockAssists), 
+            avg_blockSolos = mean(blockSolos),
+            avg_blockingErrors = mean(blockingErrors),
+            avg_hittingPercentage = mean(hittingPercentage),
+            avg_kills = mean(kills), 
+            avg_points = mean(points), 
+            avg_receptionErrors = mean(receptionErrors), 
+            avg_serviceAces = mean(serviceAces), 
+            avg_serviceErrors = mean(serviceErrors))
+
+player_example_tbl2 <- gt(player_example2)
+
+avgstats_example_tbl <- player_example_tbl2 %>%
+  tab_header(title = "Average Stats Rachel Todorovich 2012") %>%
+  fmt_number(
+    columns = c(avg_attackAttempts, avg_attackErrors, avg_ballHandlingErrors, avg_blockAssists, avg_blockSolos, avg_blockingErrors, avg_digs, avg_hittingPercentage, avg_kills, avg_points, avg_receptionErrors, avg_serviceAces, avg_serviceErrors),
+    decimals = 1
+  )
+
+avgstats_example_tbl
+```
+
+
+* WSU, average stats, 2012
+  * Helpful for comparing players
+```{r, echo = F}
+team_example2 <- small_vb_stats %>% 
+  group_by(team) %>% 
+  filter(team == "washington-st") %>% 
+  filter(year == "2012") %>% 
+  group_by(player) %>% 
+  summarize(avg_attackAttempts = mean(attackAttempts),
+            avg_attackErrors = mean(attackErrors), 
+            avg_digs = mean(digs), 
+            avg_ballHandlingErrors = mean(ballHandlingErrors), 
+            avg_blockAssists = mean(blockAssists), 
+            avg_blockSolos = mean(blockSolos),
+            avg_blockingErrors = mean(blockingErrors),
+            avg_hittingPercentage = mean(hittingPercentage),
+            avg_kills = mean(kills), 
+            avg_points = mean(points), 
+            avg_receptionErrors = mean(receptionErrors), 
+            avg_serviceAces = mean(serviceAces), 
+            avg_serviceErrors = mean(serviceErrors)) 
+
+team_example_tbl2 <- gt(team_example2)
+
+avgstatsteam_example_tbl <- team_example_tbl2 %>%
+  tab_header(title = "Average Stats WSU 2012") %>%
+  fmt_number(
+    columns = c(avg_attackAttempts, avg_attackErrors, avg_ballHandlingErrors, avg_blockAssists, avg_blockSolos, avg_blockingErrors, avg_digs, avg_hittingPercentage, avg_kills, avg_points, avg_receptionErrors, avg_serviceAces, avg_serviceErrors),
+    decimals = 1
+  )
+
+avgstatsteam_example_tbl
+```
+
+
+
+
+
+## Tab 2 on website 
+
+* Volleyball popularity map
+* Most popular/most teams in Texas and California
+
+```{r, echo = F}
+
+
+map <- FIESTA::stunitco %>% 
+  group_by(STATENM) %>% 
+  summarize(n = n())
+
+map_data <- team_counts %>% 
+  left_join(map, by = c("state" = "STATENM"))
+
+ggplot() +
+  geom_sf(data = map_data, mapping = aes(fill = n_teams, geometry = geometry)) +
+  scale_fill_scico(palette = "acton")
+```
+
+
+
+
+
+## App 2 
+
+* Volleyball stats by state map
+* Mean kills 
+
+```{r, echo = F}
+map2_data <- small_vb_stats %>% 
+  group_by(state) %>%
+  summarize(avg_kills = mean(kills))
+
+map2 <- FIESTA::stunitco %>% 
+  group_by(STATENM) %>% 
+  summarize(n = n())
+
+map2_data <- map2_data %>% 
+  left_join(map2, by = c("state" = "STATENM"))
+
+ggplot() +
+  geom_sf(data = map2_data, mapping = aes(fill = avg_kills, geometry = geometry)) +
+  scale_fill_scico(palette = "acton")
+```
+
+
+
+
+
+## App 3 
+
+* Volleyball stats bar graph  
+  * Select player or team
+  * Selct statistics of interest
+  * Change year
+
+```{r, echo = F, warning = F}
+my_colors <- c("lightyellow", "yellow", "goldenrod", "orange", "darkorange", "red", "firebrick", "darkred", "maroon", "purple","blue", "darkblue", "midnightblue")
+
+avg_data <- data.frame(
+  Variable = c("avg_attackAttempts", "avg_attackErrors", "avg_ballHandlingErrors", "avg_blockAssists", "avg_blockSolos", "avg_blockingErrors", "avg_digs", "avg_hittingPercentage", "avg_kills", "avg_points", "avg_receptionErrors", "avg_serviceAces", "avg_serviceErrors"), 
+  Average = colMeans(player_example2[, -1])
+)
+
+ggplot(avg_data, aes(x = Variable, y = Average, fill = Variable)) +
+  geom_bar(stat = "identity", color = "black") +
+  labs(title = "Rachel Todorovich Stats 2012",
+       x = "Box scores",
+       y = "Average Value") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = FALSE) +
+  scale_fill_manual(values = my_colors)
+```
+
+
+
+```{r, echo = F}
+avg_data <- data.frame(
+  Variable = c("avg_attackAttempts", "avg_attackErrors", "avg_ballHandlingErrors", "avg_blockAssists", "avg_blockSolos", "avg_blockingErrors", "avg_digs", "avg_hittingPercentage", "avg_kills", "avg_points", "avg_receptionErrors", "avg_serviceAces", "avg_serviceErrors"), 
+  Average = colMeans(team_example2[, -1])
+)
+
+ggplot(avg_data, aes(x = Variable, y = Average, fill = Variable)) +
+  geom_bar(stat = "identity", color = "black") +
+  labs(title = "WSU Stats 2012",
+       x = "Box scores",
+       y = "Average Value") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = FALSE) +
+  scale_fill_manual(values = my_colors)
+```
+
+
+
