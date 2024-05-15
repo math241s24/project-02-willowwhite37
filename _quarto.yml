@@ -1,14 +1,15 @@
 project:
   type: website
+  output-dir: docs
 
 website:
   title: Project 2
   navbar:
     right:
       - icon: github
-        href: https://github.com/math241s24/project-02
+        href: https://github.com/math241s24/project-02-willowwhite37/
     left:
-      - text: Project
+      - text: "Project"
         href: index.qmd
       - text: "Proposal"
         href: proposal.qmd

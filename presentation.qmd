@@ -112,128 +112,122 @@ team_counts <- small_vb_stats %>%
 
 ```
 
-## Introduction 
+## Introduction
 
-* Goal: 
-  * Create a shiny dashboard for visualizing volleyball
-  statistics
-  * Tool for coaches and players
-* My dataset: 
-  * NCAA (National Collegiate Athletic Association) Women's
-  Volleyball Stats 2012 - 2019
-  * 781,962 observations, 26 variables --> 781,962 observations,
-  17 variables
-  * Each row player + game
-  * All players participated 
-
-
-
-
+-   Goal:
+    -   Create a shiny dashboard for visualizing volleyball statistics
+    -   Tool for coaches and players
+-   My dataset:
+    -   NCAA (National Collegiate Athletic Association) Women's Volleyball Stats 2012 - 2019
+    -   781,962 observations, 26 variables --\> 781,962 observations, 17 variables
+    -   Each row player + game
+    -   All players participated
 
 ## App 1
 
-* Table displaying different stats
-  * Change player or team
-  * Slider to filter for year
-  * Average or all stats
-  
-* Rachel Todorovich, all stats, 2012
-  * Helpful for looking at particular games
-```{r, echo = F}
-player_example <- small_vb_stats %>% 
-  group_by(player) %>% 
-  filter(player == "Rachel Todorovich") %>% 
-  filter(year == "2012")
+-   Table displaying different stats
 
-player_example_tbl <- gt(player_example)
+    -   Change player or team
+    -   Slider to filter for year
+    -   Average or all stats
 
-allstats_example_tbl <- player_example_tbl %>%
-  tab_header(title = "All Stats Rachel Todorovich 2012") %>%
-  fmt_number(
-    columns = c(attackAttempts, attackErrors, ballHandlingErrors, blockAssists, blockSolos, blockingErrors, digs, hittingPercentage, kills, points, receptionErrors, serviceAces, serviceErrors),
-    decimals = 1
-  )
+-   Rachel Todorovich, all stats, 2012
 
-allstats_example_tbl
-```
+    -   Helpful for looking at particular games
 
+    ```{r, echo = F}
+    player_example <- small_vb_stats %>% 
+      group_by(player) %>% 
+      filter(player == "Rachel Todorovich") %>% 
+      filter(year == "2012")
 
-* Rachel Todorovich, average stats, 2012
-  * Helpful for looking at overall trends
-```{r, echo = F}
-player_example2 <- small_vb_stats %>% 
-  group_by(player) %>% 
-  filter(player == "Rachel Todorovich") %>% 
-  filter(year == "2012") %>% 
-  summarize(avg_attackAttempts = mean(attackAttempts),
-            avg_attackErrors = mean(attackErrors), 
-            avg_digs = mean(digs), 
-            avg_ballHandlingErrors = mean(ballHandlingErrors), 
-            avg_blockAssists = mean(blockAssists), 
-            avg_blockSolos = mean(blockSolos),
-            avg_blockingErrors = mean(blockingErrors),
-            avg_hittingPercentage = mean(hittingPercentage),
-            avg_kills = mean(kills), 
-            avg_points = mean(points), 
-            avg_receptionErrors = mean(receptionErrors), 
-            avg_serviceAces = mean(serviceAces), 
-            avg_serviceErrors = mean(serviceErrors))
+    player_example_tbl <- gt(player_example)
 
-player_example_tbl2 <- gt(player_example2)
+    allstats_example_tbl <- player_example_tbl %>%
+      tab_header(title = "All Stats Rachel Todorovich 2012") %>%
+      fmt_number(
+        columns = c(attackAttempts, attackErrors, ballHandlingErrors, blockAssists, blockSolos, blockingErrors, digs, hittingPercentage, kills, points, receptionErrors, serviceAces, serviceErrors),
+        decimals = 1
+      )
 
-avgstats_example_tbl <- player_example_tbl2 %>%
-  tab_header(title = "Average Stats Rachel Todorovich 2012") %>%
-  fmt_number(
-    columns = c(avg_attackAttempts, avg_attackErrors, avg_ballHandlingErrors, avg_blockAssists, avg_blockSolos, avg_blockingErrors, avg_digs, avg_hittingPercentage, avg_kills, avg_points, avg_receptionErrors, avg_serviceAces, avg_serviceErrors),
-    decimals = 1
-  )
+    allstats_example_tbl
+    ```
 
-avgstats_example_tbl
-```
+-   Rachel Todorovich, average stats, 2012
 
+    -   Helpful for looking at overall trends
 
-* WSU, average stats, 2012
-  * Helpful for comparing players
-```{r, echo = F}
-team_example2 <- small_vb_stats %>% 
-  group_by(team) %>% 
-  filter(team == "washington-st") %>% 
-  filter(year == "2012") %>% 
-  group_by(player) %>% 
-  summarize(avg_attackAttempts = mean(attackAttempts),
-            avg_attackErrors = mean(attackErrors), 
-            avg_digs = mean(digs), 
-            avg_ballHandlingErrors = mean(ballHandlingErrors), 
-            avg_blockAssists = mean(blockAssists), 
-            avg_blockSolos = mean(blockSolos),
-            avg_blockingErrors = mean(blockingErrors),
-            avg_hittingPercentage = mean(hittingPercentage),
-            avg_kills = mean(kills), 
-            avg_points = mean(points), 
-            avg_receptionErrors = mean(receptionErrors), 
-            avg_serviceAces = mean(serviceAces), 
-            avg_serviceErrors = mean(serviceErrors)) 
+    ```{r, echo = F}
+    player_example2 <- small_vb_stats %>% 
+      group_by(player) %>% 
+      filter(player == "Rachel Todorovich") %>% 
+      filter(year == "2012") %>% 
+      summarize(avg_attackAttempts = mean(attackAttempts),
+                avg_attackErrors = mean(attackErrors), 
+                avg_digs = mean(digs), 
+                avg_ballHandlingErrors = mean(ballHandlingErrors), 
+                avg_blockAssists = mean(blockAssists), 
+                avg_blockSolos = mean(blockSolos),
+                avg_blockingErrors = mean(blockingErrors),
+                avg_hittingPercentage = mean(hittingPercentage),
+                avg_kills = mean(kills), 
+                avg_points = mean(points), 
+                avg_receptionErrors = mean(receptionErrors), 
+                avg_serviceAces = mean(serviceAces), 
+                avg_serviceErrors = mean(serviceErrors))
 
-team_example_tbl2 <- gt(team_example2)
+    player_example_tbl2 <- gt(player_example2)
 
-avgstatsteam_example_tbl <- team_example_tbl2 %>%
-  tab_header(title = "Average Stats WSU 2012") %>%
-  fmt_number(
-    columns = c(avg_attackAttempts, avg_attackErrors, avg_ballHandlingErrors, avg_blockAssists, avg_blockSolos, avg_blockingErrors, avg_digs, avg_hittingPercentage, avg_kills, avg_points, avg_receptionErrors, avg_serviceAces, avg_serviceErrors),
-    decimals = 1
-  )
+    avgstats_example_tbl <- player_example_tbl2 %>%
+      tab_header(title = "Average Stats Rachel Todorovich 2012") %>%
+      fmt_number(
+        columns = c(avg_attackAttempts, avg_attackErrors, avg_ballHandlingErrors, avg_blockAssists, avg_blockSolos, avg_blockingErrors, avg_digs, avg_hittingPercentage, avg_kills, avg_points, avg_receptionErrors, avg_serviceAces, avg_serviceErrors),
+        decimals = 1
+      )
 
-avgstatsteam_example_tbl
-```
+    avgstats_example_tbl
+    ```
 
+-   WSU, average stats, 2012
 
+    -   Helpful for comparing players
 
+    ```{r, echo = F}
+    team_example2 <- small_vb_stats %>% 
+      group_by(team) %>% 
+      filter(team == "washington-st") %>% 
+      filter(year == "2012") %>% 
+      group_by(player) %>% 
+      summarize(avg_attackAttempts = mean(attackAttempts),
+                avg_attackErrors = mean(attackErrors), 
+                avg_digs = mean(digs), 
+                avg_ballHandlingErrors = mean(ballHandlingErrors), 
+                avg_blockAssists = mean(blockAssists), 
+                avg_blockSolos = mean(blockSolos),
+                avg_blockingErrors = mean(blockingErrors),
+                avg_hittingPercentage = mean(hittingPercentage),
+                avg_kills = mean(kills), 
+                avg_points = mean(points), 
+                avg_receptionErrors = mean(receptionErrors), 
+                avg_serviceAces = mean(serviceAces), 
+                avg_serviceErrors = mean(serviceErrors)) 
 
+    team_example_tbl2 <- gt(team_example2)
 
-## Tab 2 on website 
+    avgstatsteam_example_tbl <- team_example_tbl2 %>%
+      tab_header(title = "Average Stats WSU 2012") %>%
+      fmt_number(
+        columns = c(avg_attackAttempts, avg_attackErrors, avg_ballHandlingErrors, avg_blockAssists, avg_blockSolos, avg_blockingErrors, avg_digs, avg_hittingPercentage, avg_kills, avg_points, avg_receptionErrors, avg_serviceAces, avg_serviceErrors),
+        decimals = 1
+      )
 
-* Volleyball popularity map
-* Most popular/most teams in Texas and California
+    avgstatsteam_example_tbl
+    ```
+
+## Tab 2 on website
+
+-   Volleyball popularity map
+-   Most popular/most teams in Texas and California
 
 ```{r, echo = F}
 
@@ -250,14 +244,10 @@ ggplot() +
   scale_fill_scico(palette = "acton")
 ```
 
+## App 2
 
-
-
-
-## App 2 
-
-* Volleyball stats by state map
-* Mean kills 
+-   Volleyball stats by state map
+-   Mean kills
 
 ```{r, echo = F}
 map2_data <- small_vb_stats %>% 
@@ -276,16 +266,12 @@ ggplot() +
   scale_fill_scico(palette = "acton")
 ```
 
+## App 3
 
-
-
-
-## App 3 
-
-* Volleyball stats bar graph  
-  * Select player or team
-  * Selct statistics of interest
-  * Change year
+-   Volleyball stats bar graph
+    -   Select player or team
+    -   Selct statistics of interest
+    -   Change year
 
 ```{r, echo = F, warning = F}
 my_colors <- c("lightyellow", "yellow", "goldenrod", "orange", "darkorange", "red", "firebrick", "darkred", "maroon", "purple","blue", "darkblue", "midnightblue")
@@ -306,8 +292,6 @@ ggplot(avg_data, aes(x = Variable, y = Average, fill = Variable)) +
   scale_fill_manual(values = my_colors)
 ```
 
-
-
 ```{r, echo = F}
 avg_data <- data.frame(
   Variable = c("avg_attackAttempts", "avg_attackErrors", "avg_ballHandlingErrors", "avg_blockAssists", "avg_blockSolos", "avg_blockingErrors", "avg_digs", "avg_hittingPercentage", "avg_kills", "avg_points", "avg_receptionErrors", "avg_serviceAces", "avg_serviceErrors"), 
@@ -324,6 +308,3 @@ ggplot(avg_data, aes(x = Variable, y = Average, fill = Variable)) +
   guides(fill = FALSE) +
   scale_fill_manual(values = my_colors)
 ```
-
-
-
